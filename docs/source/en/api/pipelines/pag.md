@@ -25,6 +25,11 @@ The abstract from the paper is:
   - all
   - __call__
 
+## HunyuanDiTPAGPipeline
+[[autodoc]] HunyuanDiTPAGPipeline
+  - all
+  - __call__
+
 ## StableDiffusionPAGPipeline
 [[autodoc]] StableDiffusionPAGPipeline
 	- all
