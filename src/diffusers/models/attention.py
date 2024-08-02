@@ -272,6 +272,17 @@ class BasicTransformerBlock(nn.Module):
         attention_out_bias: bool = True,
     ):
         super().__init__()
+        self.dim = dim
+        self.num_attention_heads = num_attention_heads
+        self.attention_head_dim = attention_head_dim
+        self.dropout = dropout
+        self.cross_attention_dim = cross_attention_dim
+        self.activation_fn = activation_fn
+        self.attention_bias = attention_bias
+        self.double_self_attention = double_self_attention
+        self.norm_elementwise_affine = norm_elementwise_affine
+        self.positional_embeddings = positional_embeddings
+        self.num_positional_embeddings = num_positional_embeddings
         self.only_cross_attention = only_cross_attention
 
         # We keep these boolean flags for backward-compatibility.
