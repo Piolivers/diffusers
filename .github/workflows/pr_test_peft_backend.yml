@@ -72,7 +72,7 @@ jobs:
     name: LoRA - ${{ matrix.lib-versions }}
 
     runs-on:
-      group: aws-general-8-plus
+      group: aws-general-8-plus-cache
 
     container:
       image: diffusers/diffusers-pytorch-cpu

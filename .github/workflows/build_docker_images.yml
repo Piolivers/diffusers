@@ -21,7 +21,7 @@ env:
 jobs:
   test-build-docker-images:
     runs-on:
-      group: aws-general-8-plus
+      group: aws-general-8-plus-cache
     if: github.event_name == 'pull_request'
     steps:
       - name: Set up Docker Buildx
@@ -52,7 +52,7 @@ jobs:
 
   build-and-push-docker-images:
     runs-on:
-      group: aws-general-8-plus
+      group: aws-general-8-plus-cache
     if: github.event_name != 'pull_request'
 
     permissions:

@@ -82,17 +82,17 @@ jobs:
             report: torch_cpu_pipelines
           - name: Fast PyTorch Models & Schedulers CPU tests
             framework: pytorch_models
-            runner: aws-general-8-plus
+            runner: aws-general-8-plus-cache
             image: diffusers/diffusers-pytorch-cpu
             report: torch_cpu_models_schedulers
           - name: Fast Flax CPU tests
             framework: flax
-            runner: aws-general-8-plus
+            runner: aws-general-8-plus-cache
             image: diffusers/diffusers-flax-cpu
             report: flax_cpu
           - name: PyTorch Example CPU tests
             framework: pytorch_examples
-            runner: aws-general-8-plus
+            runner: aws-general-8-plus-cache
             image: diffusers/diffusers-pytorch-cpu
             report: torch_example_cpu
 
@@ -182,7 +182,7 @@ jobs:
           - name: Hub tests for models, schedulers, and pipelines
             framework: hub_tests_pytorch
             runner:
-              group: aws-general-8-plus
+              group: aws-general-8-plus-cache
             image: diffusers/diffusers-pytorch-cpu
             report: torch_hub
 
