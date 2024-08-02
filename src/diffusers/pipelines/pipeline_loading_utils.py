@@ -145,7 +145,6 @@ def variant_compatible_siblings(filenames, variant=None) -> Union[List[os.PathLi
         ONNX_WEIGHTS_NAME,
         ONNX_EXTERNAL_WEIGHTS_NAME,
     ]
-
     if is_transformers_available():
         weight_names += [TRANSFORMERS_WEIGHTS_NAME, TRANSFORMERS_SAFE_WEIGHTS_NAME, TRANSFORMERS_FLAX_WEIGHTS_NAME]
 
@@ -157,13 +156,21 @@ def variant_compatible_siblings(filenames, variant=None) -> Union[List[os.PathLi
     transformers_index_format = r"\d{5}-of-\d{5}"
 
     if variant is not None:
-        # `diffusion_pytorch_model.fp16.bin` as well as `model.fp16-00001-of-00002.safetensors`
+        # Examples:
+        # For transformers, `pytorch_model.fp16.bin` as well as `pytorch_model.fp16-00001-of-00004.bin`.
+        # For diffusers `diffusion_pytorch_model.fp16.bin` as well as `diffusion_pytorch_model-00001-of-00002.fp16.safetensors`
+        # These differences exist because `diffusers` delegates the process of loading sharded checkpoints
+        # to `accelerate`. However, `transformers` has custom code that takes care of it.
+        mid_pattern = rf"({variant}-{transformers_index_format}|(-{transformers_index_format})?\.{variant})"
         variant_file_re = re.compile(
-            rf"({'|'.join(weight_prefixes)})\.({variant}|{variant}-{transformers_index_format})\.({'|'.join(weight_suffixs)})$"
+            rf"({'|'.join(weight_prefixes)})\.({variant}|{mid_pattern})\.({'|'.join(weight_suffixs)})$"
         )
-        # `text_encoder/pytorch_model.bin.index.fp16.json`
+        # Examples:
+        # For transformers, it will be `text_encoder/pytorch_model.bin.index.fp16.json`
+        # for diffusers, it will be `unet/diffusion_pytorch_model.safetensors.fp16.index.json`
+        end_pattern = rf"({variant}\.index|index\.{variant})"
         variant_index_re = re.compile(
-            rf"({'|'.join(weight_prefixes)})\.({'|'.join(weight_suffixs)})\.index\.{variant}\.json$"
+            rf"({'|'.join(weight_prefixes)})\.({'|'.join(weight_suffixs)})\.{end_pattern}\.json"
         )
 
     # `diffusion_pytorch_model.bin` as well as `model-00001-of-00002.safetensors`
@@ -186,12 +193,27 @@ def variant_compatible_siblings(filenames, variant=None) -> Union[List[os.PathLi
 
     # all variant filenames will be used by default
     usable_filenames = set(variant_filenames)
+    is_transformers_index_file = False
+    for filename in filenames:
+        if filename.startswith(("pytorch_model", "model")) and "index" in filename:
+            is_transformers_index_file = True
+            break
 
     def convert_to_variant(filename):
         if "index" in filename:
-            variant_filename = filename.replace("index", f"index.{variant}")
+            if is_transformers_index_file:
+                variant_filename = filename.replace("index", f"index.{variant}")
+            else:
+                variant_filename = filename.replace("index", f"{variant}.index")
         elif re.compile(f"^(.*?){transformers_index_format}").match(filename) is not None:
-            variant_filename = f"{filename.split('-')[0]}.{variant}-{'-'.join(filename.split('-')[1:])}"
+            # `is_transformers_index_file` is enough to determine if we have any index from
+            # the transformers format.
+            if is_transformers_index_file:
+                variant_filename = f"{filename.split('-')[0]}.{variant}-{'-'.join(filename.split('-')[1:])}"
+            else:
+                variant_filename = f"{filename.split('-')[0]}-{'-'.join(filename.split('-')[1:])}"
+                variant_ext = variant_filename.split(".")[-1]
+                variant_filename = variant_filename.replace(variant_ext, f"{variant}.{variant_ext}")
         else:
             variant_filename = f"{filename.split('.')[0]}.{variant}.{filename.split('.')[1]}"
         return variant_filename
